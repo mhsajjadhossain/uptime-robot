@@ -9,6 +9,7 @@
 // dependencies
 const { hash, parseJSON } = require("../../helpers/utilities");
 const data = require("../../lib/data");
+const { _tokens } = require("./tokenHandler");
 // handle object - module scaffolding.
 const handle = {};
 
@@ -37,16 +38,29 @@ handle._users.get = (requestProperties, callback) => {
     typeof query?.phone === "string" && query?.phone.trim().length === 11
       ? query?.phone
       : false;
+  const token =
+    typeof requestProperties.headers.token === "string" &&
+    requestProperties.headers.token.trim().length === 20
+      ? requestProperties.headers.token
+      : false;
 
   if (phone) {
-    data.read("users", phone, (err, user) => {
-      const userToSend = { ...parseJSON(user) };
-      if (!err && user) {
-        delete userToSend.password;
-        callback(200, userToSend);
+    _tokens.verify(token, phone, (isVerified) => {
+      if (isVerified) {
+        data.read("users", phone, (err, user) => {
+          const userToSend = { ...parseJSON(user) };
+          if (!err && user) {
+            delete userToSend.password;
+            callback(200, userToSend);
+          } else {
+            callback(404, {
+              error: "User can't found!",
+            });
+          }
+        });
       } else {
-        callback(404, {
-          error: "User can't found!",
+        callback(401, {
+          error: "unauthorized request",
         });
       }
     });
@@ -148,6 +162,11 @@ handle._users.put = (requestProperties, callback) => {
     requestProperties.body.phone.trim().length === 11
       ? requestProperties.body.phone
       : false;
+  const token =
+    typeof requestProperties.headers.token === "string" &&
+    requestProperties.headers.token.trim().length === 20
+      ? requestProperties.headers.token
+      : false;
   //   validating firstName
   const firstName =
     typeof requestProperties.body.firstName === "string" &&
@@ -172,29 +191,39 @@ handle._users.put = (requestProperties, callback) => {
     // check if updated anything
     if (firstName || lastName || password) {
       // lookup if user exist
-      data.read("users", phone, (readErr, user) => {
-        const userData = { ...parseJSON(user) };
-        if (!readErr && user) {
-          // update properties if exist
-          if (firstName) userData.firstName = firstName;
-          if (lastName) userData.lastName = lastName;
-          if (password) userData.password = hash(password);
+      _tokens.verify(token, phone, (isVerified) => {
+        // verify user
+        if (isVerified) {
+          // lookup for users
+          data.read("users", phone, (readErr, user) => {
+            const userData = { ...parseJSON(user) };
+            if (!readErr && user) {
+              // update properties if exist
+              if (firstName) userData.firstName = firstName;
+              if (lastName) userData.lastName = lastName;
+              if (password) userData.password = hash(password);
 
-          // update the user to database
-          data.update("users", phone, userData, (updateErr) => {
-            if (!updateErr) {
-              callback(200, {
-                message: "User has been successfully updated!",
+              // update the user to database
+              data.update("users", phone, userData, (updateErr) => {
+                if (!updateErr) {
+                  callback(200, {
+                    message: "User has been successfully updated!",
+                  });
+                } else {
+                  callback(500, {
+                    error: "There have a problem in server",
+                  });
+                }
               });
             } else {
-              callback(500, {
-                error: "There have a problem in server",
+              callback(400, {
+                error: "Invalid User Input",
               });
             }
           });
         } else {
-          callback(400, {
-            error: "Invalid User Input",
+          callback(401, {
+            error: "unauthorized request",
           });
         }
       });
@@ -222,25 +251,39 @@ handle._users.delete = (requestProperties, callback) => {
     typeof query?.phone === "string" && query?.phone.trim().length === 11
       ? query?.phone
       : false;
-
+  const token =
+    typeof requestProperties.headers.token === "string" &&
+    requestProperties.headers.token.trim().length === 20
+      ? requestProperties.headers.token
+      : false;
   if (phone) {
-    // lookup for the user if exist
-    data.read("users", phone, (lookupErr, user) => {
-      if (!lookupErr && user) {
-        data.delete("users", phone, (err) => {
-          if (!err) {
-            callback(200, {
-              message: "user was successfully deleted",
+    // lookup if user exist
+    _tokens.verify(token, phone, (isVerified) => {
+      // verify user
+      if (isVerified) {
+        // lookup for the user if exist
+        data.read("users", phone, (lookupErr, user) => {
+          if (!lookupErr && user) {
+            data.delete("users", phone, (err) => {
+              if (!err) {
+                callback(200, {
+                  message: "user was successfully deleted",
+                });
+              } else {
+                callback(500, {
+                  error: "There has a issue in deleting user",
+                });
+              }
             });
           } else {
-            callback(500, {
-              error: "There has a issue in deleting user",
+            callback(400, {
+              error: "user dose not exist",
             });
           }
         });
       } else {
-        callback(400, {
-          error: "user dose not exist",
+        callback(401, {
+          error: "unauthorized request",
         });
       }
     });

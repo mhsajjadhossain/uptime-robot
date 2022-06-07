@@ -12,6 +12,7 @@ const {
   parseJSON,
   generateRandomString,
 } = require("../../helpers/utilities");
+const { update } = require("../../lib/data");
 const data = require("../../lib/data");
 // handle object - module scaffolding.
 const handle = {};
@@ -95,7 +96,6 @@ handle._tokens.post = (requestProperties, callback) => {
 
   // check if all fields are available
   if (phone && password) {
-    // check user is already exist
     data.read("users", phone, (err, user) => {
       if (!err) {
         // verifying user
@@ -131,25 +131,109 @@ handle._tokens.post = (requestProperties, callback) => {
   }
 };
 /**
- * @title : Update User Controller
+ * @title : Update Token Controller
  * @method put
  * @Auth : true
  * @sample_request_body : {
- *  "firstName": "M.h Sajjad Hossain",
- *  "lastName": "Ripon",
- *  "phone": "01913055200",
- *  "password": "secret12"
+ *  "id": "alsjfalsvlksaiosfjlasdk",
+ *  "extends":true/false
  * }
  */
-handle._tokens.put = (requestProperties, callback) => {};
+handle._tokens.put = (requestProperties, callback) => {
+  const token =
+    typeof requestProperties.body?.id === "string" &&
+    requestProperties.body?.id.trim().length === 20
+      ? requestProperties.body?.id
+      : false;
+
+  const isExtends =
+    typeof requestProperties.body?.extends === "boolean" &&
+    requestProperties.body?.extends
+      ? requestProperties.body?.extends
+      : false;
+
+  if (token && isExtends) {
+    // lookup for token
+    data.read("tokens", token, (readErr, tokenData) => {
+      let tokenObj = { ...parseJSON(tokenData) };
+      const isExpired = tokenObj.expires < Date.now();
+
+      if (!isExpired) {
+        tokenObj.expires = Date.now() + 60 * 60 * 1000;
+        data.update("tokens", token, tokenObj, (updateErr) => {
+          if (!updateErr) {
+            callback(200, {
+              message: "token updated successfully!",
+            });
+          } else {
+            callback(500, {
+              error: "There is a problem in server side",
+            });
+          }
+        });
+      } else {
+        callback(401, {
+          error: "Token Already Expired!",
+        });
+      }
+    });
+  } else {
+    callback(400, {
+      error: "There is a problem in your request!",
+    });
+  }
+};
 
 /**
- * @title : delete user controller
+ * @title : delete token controller
  * @method delete
  * @Auth : true
- * @query : baseurl.com/users?phone=01912033222
+ * @query : baseurl.com/users?id=01912033222
  */
-handle._tokens.delete = (requestProperties, callback) => {};
+handle._tokens.delete = (requestProperties, callback) => {
+  const token =
+    typeof requestProperties.query?.id === "string" &&
+    requestProperties.query?.id.trim().length === 20
+      ? requestProperties.query?.id
+      : false;
+  if (token) {
+    data.read("tokens", token, (err) => {
+      if (!err) {
+        callback(200, {
+          error: "Token Successfully Deleted",
+        });
+      } else {
+        callback(500, {
+          error: "There is a problem in server side!",
+        });
+      }
+    });
+  } else {
+    callback(400, {
+      error: "There have a problem with your request.",
+    });
+  }
+};
 
+/**
+ * @title : token verify function
+ * @params id,phone,callback
+ */
+handle._tokens.verify = (id, phone, callback) => {
+  // lookup for the token
+  data.read("tokens", id, (err, tokenData) => {
+    if (!err && tokenData) {
+      const isPhoneMatched = parseJSON(tokenData).phone === phone;
+      const isExpired = parseJSON(tokenData).expires < Date.now();
+      if (isPhoneMatched && !isExpired) {
+        callback(true);
+      } else {
+        callback(false);
+      }
+    } else {
+      callback(false);
+    }
+  });
+};
 // exporting module
 module.exports = handle;

@@ -41,7 +41,6 @@ utilities.hash = (str) => {
  * @type Number (string lenth)
  * @return Random Generated String
  */
-
 utilities.generateRandomString = (stringLength) => {
   const validLength =
     typeof stringLength === "number" && stringLength > 0 ? stringLength : false;
