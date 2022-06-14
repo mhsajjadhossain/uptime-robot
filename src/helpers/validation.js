@@ -19,7 +19,7 @@ validation.isValidPhone = (phone) => {
 // token validation
 validation.isValidToken = (token) => {
   return typeof token === "string" && token.trim().length === 20
-    ? token
+    ? token.trim()
     : false;
 };
 // password validation
@@ -68,5 +68,6 @@ validation.isValidProtocol = (str) => {
     ? str
     : false;
 };
+
 // exporting module
 module.exports = validation;

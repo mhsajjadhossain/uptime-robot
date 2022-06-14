@@ -45,7 +45,36 @@ handle._checks = {};
  * @query : baseurl.com/users?phone=01912033222
  * @Auth : true
  */
-handle._checks.get = (requestProperties, callback) => {};
+handle._checks.get = (requestProperties, callback) => {
+  // validating inputs
+  const token = isValidToken(requestProperties.headers.id);
+  console.log("token :", token);
+  const id = isValidToken(requestProperties.query.id);
+  // console.log("id :", id);
+
+  if (id) {
+    // if id is available and valid the lookup for the check doc
+    data.read("checks", id, (checkReadErr, checkData) => {
+      if (!checkReadErr) {
+        const checkObject = parseJSON(checkData);
+        console.log("checkObject :", checkObject);
+        // verify the user
+        _tokens.verify(token, checkObject.usersPhone, (isVerified) => {
+          console.log("isValidToken :", isVerified);
+          if (isVerified) {
+            callback(200, checkObject);
+          } else {
+            callback(401, { err: "UnAuthorized" });
+          }
+        });
+      } else {
+        callback(400, { err: "you have a problem in your request" });
+      }
+    });
+  } else {
+    callback(400, { err: "you have a problem in your request" });
+  }
+};
 /**
  * @title : Create Checks Controller
  * @method post
@@ -76,10 +105,6 @@ handle._checks.post = (requestProperties, callback) => {
           if (!userErr && user) {
             _tokens.verify(token, usersPhone, (isVerified) => {
               if (isVerified) {
-                /**
-                 * @TODO have to create checks and add its id to users doc.
-                 *
-                 */
                 let userObj = parseJSON(user);
                 let usersChecks =
                   typeof userObj.checks === "object" &&
@@ -118,18 +143,18 @@ handle._checks.post = (requestProperties, callback) => {
                     }
                   });
                 } else {
-                  callback("401", {
+                  callback("400", {
                     err: "User has already reached max checks limit!",
                   });
                 }
               } else {
-                callback("403", {
+                callback("401", {
                   err: "unAuthorized!",
                 });
               }
             });
           } else {
-            callback("403", {
+            callback("401", {
               err: "unAuthorized!",
             });
           }
