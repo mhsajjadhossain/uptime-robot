@@ -8,6 +8,14 @@
  */
 // dependencies
 const { hash, parseJSON } = require("../../helpers/utilities");
+const validation = require("../../helpers/validation");
+const {
+  isBoolean,
+  isValidPassword,
+  isValidPhone,
+  isValidName,
+  isValidToken,
+} = require("../../helpers/validation");
 const data = require("../../lib/data");
 const { _tokens } = require("./tokenHandler");
 // handle object - module scaffolding.
@@ -34,15 +42,8 @@ handle._users = {};
  */
 handle._users.get = (requestProperties, callback) => {
   const { query } = requestProperties;
-  const phone =
-    typeof query?.phone === "string" && query?.phone.trim().length === 11
-      ? query?.phone
-      : false;
-  const token =
-    typeof requestProperties.headers.token === "string" &&
-    requestProperties.headers.token.trim().length === 20
-      ? requestProperties.headers.token
-      : false;
+  const phone = isValidPhone(query?.phone);
+  const token = isValidToken(requestProperties.headers.token);
 
   if (phone) {
     _tokens.verify(token, phone, (isVerified) => {
@@ -83,36 +84,13 @@ handle._users.get = (requestProperties, callback) => {
  *
  */
 handle._users.post = (requestProperties, callback) => {
-  //   validating firstName
-  const firstName =
-    typeof requestProperties.body.firstName === "string" &&
-    requestProperties.body.firstName.trim().length > 0
-      ? requestProperties.body.firstName
-      : false;
-  // validating lastName
-  const lastName =
-    typeof requestProperties.body.lastName === "string" &&
-    requestProperties.body.lastName.trim().length > 0
-      ? requestProperties.body.lastName
-      : false;
+  // data validation
+  const firstName = isValidName(requestProperties.body.firstName);
+  const lastName = isValidName(requestProperties.body.lastName);
+  const phone = isValidPhone(requestProperties.body.phone);
+  const password = isValidPassword(requestProperties.body.password);
+  const tncAgreement = isBoolean(requestProperties.body.tncAgreement);
 
-  // validating phone
-  const phone =
-    typeof requestProperties.body.phone === "string" &&
-    requestProperties.body.phone.trim().length === 11
-      ? requestProperties.body.phone
-      : false;
-  // validating password
-  const password =
-    typeof requestProperties.body.password === "string" &&
-    requestProperties.body.password.trim().length >= 8
-      ? requestProperties.body.password
-      : false;
-  //   validating tncAgriment
-  const tncAgreement =
-    typeof requestProperties.body.tncAgreement === "boolean"
-      ? requestProperties.body.tncAgreement
-      : false;
   // check if all fields are available
   if (firstName && lastName && phone && password && tncAgreement) {
     // check user is already exist
@@ -155,37 +133,14 @@ handle._users.post = (requestProperties, callback) => {
  *  "password": "secret12"
  * }
  */
-handle._users.put = (requestProperties, callback) => {
-  // validating phone
-  const phone =
-    typeof requestProperties.body.phone === "string" &&
-    requestProperties.body.phone.trim().length === 11
-      ? requestProperties.body.phone
-      : false;
-  const token =
-    typeof requestProperties.headers.token === "string" &&
-    requestProperties.headers.token.trim().length === 20
-      ? requestProperties.headers.token
-      : false;
-  //   validating firstName
-  const firstName =
-    typeof requestProperties.body.firstName === "string" &&
-    requestProperties.body.firstName.trim().length > 0
-      ? requestProperties.body.firstName
-      : false;
-  // validating lastName
-  const lastName =
-    typeof requestProperties.body.lastName === "string" &&
-    requestProperties.body.lastName.trim().length > 0
-      ? requestProperties.body.lastName
-      : false;
 
-  // validating password
-  const password =
-    typeof requestProperties.body.password === "string" &&
-    requestProperties.body.password.trim().length >= 8
-      ? requestProperties.body.password
-      : false;
+handle._users.put = (requestProperties, callback) => {
+  // data validation
+  const phone = isValidPhone(requestProperties.body.phone);
+  const token = isValidToken(requestProperties.headers.token);
+  const firstName = isValidName(requestProperties.body.firstname);
+  const lastName = isValidName(requestProperties.body.lastname);
+  const password = isValidPassword(requestProperties.body.password);
   // check if phone true
   if (phone) {
     // check if updated anything
@@ -246,16 +201,10 @@ handle._users.put = (requestProperties, callback) => {
  * @query : baseurl.com/users?phone=01912033222
  */
 handle._users.delete = (requestProperties, callback) => {
+  // data validation
   const { query } = requestProperties;
-  const phone =
-    typeof query?.phone === "string" && query?.phone.trim().length === 11
-      ? query?.phone
-      : false;
-  const token =
-    typeof requestProperties.headers.token === "string" &&
-    requestProperties.headers.token.trim().length === 20
-      ? requestProperties.headers.token
-      : false;
+  const phone = isValidPhone(query?.phone);
+  const token = isValidToken(requestProperties.headers.token);
   if (phone) {
     // lookup if user exist
     _tokens.verify(token, phone, (isVerified) => {

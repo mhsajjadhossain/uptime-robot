@@ -12,6 +12,12 @@ const {
   parseJSON,
   generateRandomString,
 } = require("../../helpers/utilities");
+const {
+  isBoolean,
+  isValidPhone,
+  isValidPassword,
+  isValidToken,
+} = require("../../helpers/validation");
 const { update } = require("../../lib/data");
 const data = require("../../lib/data");
 // handle object - module scaffolding.
@@ -38,16 +44,8 @@ handle._tokens = {};
  */
 handle._tokens.get = (requestProperties, callback) => {
   const { query } = requestProperties;
-  const phone =
-    typeof query?.phone === "string" && query?.phone.trim().length === 11
-      ? query?.phone
-      : false;
-  const token =
-    typeof requestProperties.headers?.token === "string" &&
-    requestProperties.headers?.token.trim().length === 20
-      ? requestProperties.headers?.token
-      : false;
-  console.log(requestProperties.headers?.token.trim().length);
+  const phone = isValidPhone(query?.phone);
+  const token = isValidToken(requestProperties.headers.token);
   if (phone && token) {
     data.read("tokens", token, (tokenReadErr, tokenObj) => {
       const tokenData = { ...parseJSON(tokenObj) };
@@ -81,18 +79,10 @@ handle._tokens.get = (requestProperties, callback) => {
  */
 handle._tokens.post = (requestProperties, callback) => {
   // validating phone
-  const phone =
-    typeof requestProperties.body.phone === "string" &&
-    requestProperties.body.phone.trim().length === 11
-      ? requestProperties.body.phone
-      : false;
+  const phone = isValidPhone(requestProperties.body.phone);
 
   // validating password
-  const password =
-    typeof requestProperties.body.password === "string" &&
-    requestProperties.body.password.trim().length >= 8
-      ? requestProperties.body.password
-      : false;
+  const password = isValidPassword(requestProperties.body.password);
 
   // check if all fields are available
   if (phone && password) {
@@ -140,17 +130,9 @@ handle._tokens.post = (requestProperties, callback) => {
  * }
  */
 handle._tokens.put = (requestProperties, callback) => {
-  const token =
-    typeof requestProperties.body?.id === "string" &&
-    requestProperties.body?.id.trim().length === 20
-      ? requestProperties.body?.id
-      : false;
+  const token = isValidToken(requestProperties.body.id);
 
-  const isExtends =
-    typeof requestProperties.body?.extends === "boolean" &&
-    requestProperties.body?.extends
-      ? requestProperties.body?.extends
-      : false;
+  const isExtends = isBoolean(requestProperties.body.extends);
 
   if (token && isExtends) {
     // lookup for token
@@ -191,16 +173,12 @@ handle._tokens.put = (requestProperties, callback) => {
  * @query : baseurl.com/users?id=01912033222
  */
 handle._tokens.delete = (requestProperties, callback) => {
-  const token =
-    typeof requestProperties.query?.id === "string" &&
-    requestProperties.query?.id.trim().length === 20
-      ? requestProperties.query?.id
-      : false;
+  const token = isValidToken(requestProperties.headers.token);
   if (token) {
     data.read("tokens", token, (err) => {
       if (!err) {
         callback(200, {
-          error: "Token Successfully Deleted",
+          message: "Token Successfully Deleted",
         });
       } else {
         callback(500, {

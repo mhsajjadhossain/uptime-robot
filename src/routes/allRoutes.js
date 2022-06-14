@@ -7,6 +7,7 @@
  * Time: 16:09:19.000-05:00
  */
 // Dependencies
+const { checkHandler } = require("../handlers/routeHandlers/checkHandler");
 const { sampleHandler } = require("../handlers/routeHandlers/sampleHandler");
 const { tokenHandler } = require("../handlers/routeHandlers/tokenHandler");
 const { userHandler } = require("../handlers/routeHandlers/userHandler");
@@ -16,6 +17,7 @@ const routes = {
   sample: sampleHandler,
   user: userHandler,
   tokens: tokenHandler,
+  checks: checkHandler,
 };
 // exporting module
 module.exports = routes;

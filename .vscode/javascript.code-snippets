@@ -1,0 +1,50 @@
+{
+    "password validation":{
+        "prefix": "validPass",
+        "scope": "javascript",
+        "body": [
+            "isValidPassword(requestProperties.body.phone)"
+        ],
+        "description": "password validation"
+    },
+    "name validation":{
+        "prefix": "vnm",
+        "scope": "javascript",
+        "body": [
+            "isValidName(requestProperties.body.$1);"
+        ],
+        "description": "name validation"
+    },
+    "phone validation":{
+        "prefix": "vph",
+        "scope": "javascript",
+        "body": [
+            "isValidPhone(requestProperties.body.phone);"
+        ],
+        "description": "phone validation"
+    },
+    "password validation":{
+        "prefix": "vpass",
+        "scope": "javascript",
+        "body": [
+            "isValidPassword(requestProperties.body.password);"
+        ],
+        "description": "password validation"
+    },
+    "boolean validation":{
+        "prefix": "vbool",
+        "scope": "javascript",
+        "body": [
+            "isBoolean(requestProperties.body.tncAgreement);"
+        ],
+        "description": "boolean validation"
+    },
+    "token validation":{
+        "prefix": "vtoken",
+        "scope": "javascript",
+        "body": [
+            "isValidToken(requestProperties.headers.token);"
+        ],
+        "description": "token validation"
+    }
+}

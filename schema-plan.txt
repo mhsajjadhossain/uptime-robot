@@ -1,0 +1,18 @@
+#Users doc schema
+----------------------------------------------
+{
+    "firstName":"M.h Sajjad Hossain",
+    "lastName":"Ripon",
+    "phone":"01913055208",
+    "password":"a6524f4f5194cfa11706435253b5eddccf35ad7f785356d2954e6149816255ec",
+    "tncAgreement":true
+    "checks":[]
+}
+
+#token doc schema
+-----------------------------------------------
+{
+    "id":"7rn3qtde1j10pcut6u15",
+    "phone":"01913055208",
+    "expires":1654672193683
+}

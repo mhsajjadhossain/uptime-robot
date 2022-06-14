@@ -14,12 +14,14 @@ env.staging = {
   port: 5000,
   envName: "staging",
   secret: "c0fa1bc00531bd78ef38c628449c5102",
+  maxChecks: 5,
 };
 // production environment
 env.production = {
   port: 3000,
   envName: "production",
   secret: "c0fa1bc00531bd78ef38c628449c5102",
+  maxChecks: 5,
 };
 // determine which environment was passed
 const currentEnvironment =
