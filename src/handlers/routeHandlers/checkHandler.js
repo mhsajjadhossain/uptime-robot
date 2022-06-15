@@ -42,13 +42,12 @@ handle._checks = {};
 /**
  * @title : Get checks controller
  * @method get
- * @query : baseurl.com/users?phone=01912033222
+ * @query : baseurl.com/users?id=lasfasdjnvslkdajhbnd
  * @Auth : true
  */
 handle._checks.get = (requestProperties, callback) => {
   // validating inputs
   const token = isValidToken(requestProperties.headers.id);
-  console.log("token :", token);
   const id = isValidToken(requestProperties.query.id);
   // console.log("id :", id);
 
@@ -57,10 +56,9 @@ handle._checks.get = (requestProperties, callback) => {
     data.read("checks", id, (checkReadErr, checkData) => {
       if (!checkReadErr) {
         const checkObject = parseJSON(checkData);
-        console.log("checkObject :", checkObject);
+
         // verify the user
         _tokens.verify(token, checkObject.usersPhone, (isVerified) => {
-          console.log("isValidToken :", isVerified);
           if (isVerified) {
             callback(200, checkObject);
           } else {
@@ -79,12 +77,12 @@ handle._checks.get = (requestProperties, callback) => {
  * @title : Create Checks Controller
  * @method post
  * @sample_request_body : {
- *  "firstName": "M.h Sajjad Hossain",
- *  "lastName": "Ripon",
- *  "phone": "01913055200",
- *  "password": "secret12",
- *  "tncAgreement": true
- * }
+    "method": "POST",
+    "protocol":"https",
+    "url": "yahoo.com",
+    "statusCodes":[200,400],
+    "maxTimeOut":2
+}
  *
  */
 handle._checks.post = (requestProperties, callback) => {
@@ -95,7 +93,7 @@ handle._checks.post = (requestProperties, callback) => {
   const url = isValidUrl(requestProperties.body.url);
   const statusCodes = isValidStatusCode(requestProperties.body.statusCodes);
   const maxTimeOut = isValidTimeOut(requestProperties.body.maxTimeOut);
-  if (method || url || statusCodes || maxTimeOut) {
+  if (method && url && statusCodes && maxTimeOut && protocol) {
     // look for the token data
     data.read("tokens", token, (err, tokenObj) => {
       if (!err && tokenObj) {
@@ -191,21 +189,133 @@ handle._checks.post = (requestProperties, callback) => {
  * @method put
  * @Auth : true
  * @sample_request_body : {
- *  "firstName": "M.h Sajjad Hossain",
- *  "lastName": "Ripon",
- *  "phone": "01913055200",
- *  "password": "secret12"
- * }
+		"id":"6pfcq5dyvk0kaj2hnvxd",
+    "method": "POST",
+    "protocol":"https",
+    "url": "bing.com",
+    "statusCodes":[500,400],
+    "maxTimeOut":5
+}
  */
-handle._checks.put = (requestProperties, callback) => {};
+handle._checks.put = (requestProperties, callback) => {
+  // data validation
+  const token = isValidToken(requestProperties.headers.id);
+  const method = isValidMethod(requestProperties.body.method);
+  const protocol = isValidProtocol(requestProperties.body.protocol);
+  const url = isValidUrl(requestProperties.body.url);
+  const statusCodes = isValidStatusCode(requestProperties.body.statusCodes);
+  const maxTimeOut = isValidTimeOut(requestProperties.body.maxTimeOut);
+  const id = isValidToken(requestProperties.body.id);
+  if (id || method || url || statusCodes || maxTimeOut || protocol) {
+    // if have any inputs the lookup for the check doc
+    data.read("checks", id, (checkReadErr, checkData) => {
+      if (!checkReadErr) {
+        let checkObj = parseJSON(checkData);
+        _tokens.verify(token, checkObj.usersPhone, (isVerified) => {
+          if (isVerified) {
+            // updating the chech object if data available
+            method ? (checkObj.method = method) : "";
+            protocol ? (checkObj.protocol = protocol) : "";
+            url ? (checkObj.url = url) : "";
+            statusCodes ? (checkObj.statusCodes = statusCodes) : "";
+            maxTimeOut ? (checkObj.maxTimeOut = maxTimeOut) : "";
+
+            // updating data on doc
+            data.update("checks", id, checkObj, (updateErr) => {
+              if (!updateErr) {
+                callback(200, checkObj);
+              } else {
+                callback(500, { err: "There have problem in server side" });
+              }
+            });
+          } else {
+            callback(401, {
+              err: "UnAuthorized!",
+            });
+          }
+        });
+      } else {
+        callback(400, {
+          err: "There have a problem in your request",
+        });
+      }
+    });
+  } else {
+    callback(400, { err: "There have a problem in your request" });
+  }
+  // look for the token data
+};
 
 /**
  * @title : delete user controller
  * @method delete
  * @Auth : true
- * @query : baseurl.com/users?phone=01912033222
+ * @query : baseurl.com/users?id=6pfcq5dyvk0kaj2hnvxd
  */
-handle._checks.delete = (requestProperties, callback) => {};
+handle._checks.delete = (requestProperties, callback) => {
+  // validating inputs
+  const token = isValidToken(requestProperties.headers.token);
+  const id = isValidToken(requestProperties.query.id);
+
+  if (id) {
+    // lookup check if available
+    data.read("checks", id, (checkErr, checkData) => {
+      if (!checkErr) {
+        const { usersPhone } = parseJSON(checkData);
+        // check if the token is valid
+        _tokens.verify(token, usersPhone, (isVerified) => {
+          if (isVerified) {
+            // deleting the check doc
+            data.delete("checks", id, (deleteErr) => {
+              if (!deleteErr) {
+                // remove check from users record
+                data.read("users", usersPhone, (userErr, userData) => {
+                  if (!userErr) {
+                    let userObj = parseJSON(userData);
+                    const idHaveToRemove = userObj.checks.indexOf(id);
+                    userObj.checks.splice(idHaveToRemove, 1);
+                    // updating new record to user doc
+                    data.update("users", usersPhone, userObj, (userErr2) => {
+                      if (!userErr2) {
+                        callback(200, {
+                          message: "check successfully deleted!",
+                        });
+                      } else {
+                        callback(500, {
+                          err: "There have a problem in server side!",
+                        });
+                      }
+                    });
+                  } else {
+                    callback(500, {
+                      err: "There have a problem in server side!",
+                    });
+                  }
+                });
+              } else {
+                callback(500, {
+                  err: "There have a problem in in server side",
+                });
+              }
+            });
+          } else {
+            callback(401, {
+              err: "UnAuthorized",
+            });
+          }
+        });
+      } else {
+        callback(400, {
+          err: "There have a problem in your request!",
+        });
+      }
+    });
+  } else {
+    callback(400, {
+      err: "There have a problem in your request!",
+    });
+  }
+};
 
 // exporting module
 module.exports = handle;

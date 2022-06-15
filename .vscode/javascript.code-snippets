@@ -46,5 +46,26 @@
             "isValidToken(requestProperties.headers.token);"
         ],
         "description": "token validation"
+    },
+    "for sending 400 err response to user":{
+        "prefix": "err400",
+        "scope": "javascript",
+        "body": [
+            "callback(400, {",
+            "      err: \"There have a problem in your request!\",",
+            "    });"
+        ],
+        "description": "for sending 400 err response to user"
+    },
+    "for sending 401 err response to user":{
+        "prefix": "err401",
+        "scope": "javascript",
+        "body": [
+            "callback(401, {",
+            "              err: \"UnAuthorized\",",
+            "            });"
+        ],
+        "description": "for sending 401 err response to user"
     }
+    
 }
